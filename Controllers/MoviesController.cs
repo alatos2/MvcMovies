@@ -18,28 +18,61 @@ namespace MvcMovie.Controllers
         {
             _context = context;
         }
-        
-        [HttpPost]
-        public string Index(string searchString, bool notUsed) {
-            return "From [HttpPost]Index: filter on " + searchString;
-        }
 
+        // [HttpPost]
+        // public string Index(string searchString, bool notUsed) {
+        //     return "From [HttpPost]Index: filter on " + searchString;
+        // }
+
+        // // GET: Movies
+        // public async Task<IActionResult> Index(string id)
+        // {
+        //     //   return _context.Movie != null ? 
+        //     //               View(await _context.Movie.ToListAsync()) :
+        //     //               Problem("Entity set 'MvcMovieContext.Movie'  is null.");
+        //     if (_context.Movie == null){
+        //         return Problem("Entity set 'MvcMovieContext.Movie'  is null.");
+        //     }
+
+        //     var movies = from m in _context.Movie select m;
+
+        //     if (!String.IsNullOrEmpty(id)){
+        //         movies = movies.Where(s => s.Title!.Contains(id));
+        //     }
+        //         return View(await movies.ToListAsync());
+        // }
         // GET: Movies
-        public async Task<IActionResult> Index(string id)
+        public async Task<IActionResult> Index(string movieGenre, string searchString)
         {
-            //   return _context.Movie != null ? 
-            //               View(await _context.Movie.ToListAsync()) :
-            //               Problem("Entity set 'MvcMovieContext.Movie'  is null.");
-            if (_context.Movie == null){
+            if (_context.Movie == null)
+            {
                 return Problem("Entity set 'MvcMovieContext.Movie'  is null.");
             }
 
-            var movies = from m in _context.Movie select m;
+            // Use LINQ to get list of genres.
+            IQueryable<string> genreQuery = from m in _context.Movie
+                                            orderby m.Genre
+                                            select m.Genre;
+            var movies = from m in _context.Movie
+                        select m;
 
-            if (!String.IsNullOrEmpty(id)){
-                movies = movies.Where(s => s.Title!.Contains(id));
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                movies = movies.Where(s => s.Title!.Contains(searchString));
             }
-                return View(await movies.ToListAsync());
+
+            if (!string.IsNullOrEmpty(movieGenre))
+            {
+                movies = movies.Where(x => x.Genre == movieGenre);
+            }
+
+            var movieGenreVM = new MovieGenreViewModel
+            {
+                Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
+                Movies = await movies.ToListAsync()
+            };
+
+            return View(movieGenreVM);
         }
 
         // GET: Movies/Details/5
